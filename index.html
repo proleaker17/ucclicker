@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diamond Clicker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Hide scrollbars caused by particles leaving the screen */
+            /* Background image style */
+            background-image: url('https://wallpapercave.com/wp/wp10577101.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh; /* Ensure body takes full viewport height */
+        }
+        .title-font {
+            font-family: 'Anton', sans-serif;
+            letter-spacing: 2px;
+            text-shadow: 3px 3px 0px rgba(0,0,0,0.2);
+        }
+        /* The main clickable icon */
+        #vbuck-button {
+            /* Removed fixed width, size is now controlled by Tailwind classes */
+            height: auto;
+            transition: transform 0.1s ease-in-out;
+            user-select: none; /* Prevent image from being dragged */
+            -webkit-user-drag: none; /* Safari */
+        }
+        #vbuck-button:active {
+            transform: scale(0.95);
+        }
+        /* Container for the flying particles */
+        #particle-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Allows clicks to pass through to the button */
+            z-index: 9999;
+        }
+        /* Individual particle styling and animation */
+        .particle {
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            animation: fly-out 0.8s ease-out forwards;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+        /* Animation keyframes for the particle effect */
+        @keyframes fly-out {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--x), var(--y)) scale(0.5) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body class="text-white select-none">
+
+    <!-- Main container with responsive layout -->
+    <div class="min-h-screen flex flex-col items-center justify-center text-center p-4 bg-black bg-opacity-40">
+
+        <!-- Score Counter - Adjusted for responsiveness -->
+        <div id="score" class="flex items-center justify-center title-font text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold my-4 md:my-8 drop-shadow-md">
+            <!-- Diamond icon - Adjusted for responsiveness -->
+            <img src="64edfd877e71913d128b1ec1.png" alt="Diamond" class="w-28 h-28 sm:w-16 sm:h-16 md:w-20 md:h-20 mr-0 md:mr-4 drop-shadow-md" onerror="this.style.display='none'">
+            <span id="score-text">0</span>
+        </div>
+
+        <!-- Clickable Chest Image Container -->
+        <div class="relative w-full flex justify-center">
+             <!-- The image is now responsive, taking a portion of the screen width with a max size -->
+            <img id="vbuck-button" 
+                 src="icon-ucs.png" 
+                 alt="Diamond Chest Icon" 
+                 class="cursor-pointer hover:scale-105 transition-transform duration-200 w-2/3 max-w-xs sm:max-w-sm md:max-w-md"
+                 onerror="this.onerror=null;this.src='https://placehold.co/400x400/8a2be2/ffffff?text=Error';">
+        </div>
+
+    </div>
+
+    <!-- Particle Container -->
+    <div id="particle-container"></div>
+
+    <script>
+        // --- DOM Element References ---
+        const vbuckButton = document.getElementById('vbuck-button');
+        const scoreDisplay = document.getElementById('score'); // This is the container for the icon and text
+        const scoreText = document.getElementById('score-text'); // This is the span for the number
+        const particleContainer = document.getElementById('particle-container');
+
+        // --- Game State ---
+        let score = 0;
+        const pointsPerClick = 5000; // Amount added per click
+
+        // --- Event Listener for Clicks ---
+        // Using 'mousedown' for a more immediate feel than 'click'
+        vbuckButton.addEventListener('mousedown', (e) => {
+            // 1. Increment score and update the text display
+            score += pointsPerClick;
+            scoreText.textContent = score;
+            
+            // 2. Add a "pop" animation to the score container (animates both icon and text)
+            scoreDisplay.animate([
+                { transform: 'scale(1.2)', color: '#FFD700' },
+                { transform: 'scale(1)', color: 'white' }
+            ], {
+                duration: 200,
+                easing: 'ease-out'
+            });
+
+            // 3. Create a burst of particles
+            createParticleBurst(e.clientX, e.clientY);
+        });
+        
+        /**
+         * Creates a burst of diamond particles at the specified coordinates.
+         * @param {number} x - The horizontal coordinate of the click.
+         * @param {number} y - The vertical coordinate of the click.
+         */
+        function createParticleBurst(x, y) {
+            const particleCount = 8; // How many particles to create per click
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('img');
+                
+                // --- Configure the particle element ---
+                particle.src = '64edfd877e71913d128b1ec1.png';
+                particle.onerror = "this.onerror=null;this.src='https://placehold.co/35x35/8a2be2/ffffff?text=E';";
+                particle.classList.add('particle');
+                
+                // --- Position the particle at the click location ---
+                // We offset by half the particle size to center it on the cursor
+                particle.style.left = `${x - 17}px`;
+                particle.style.top = `${y - 17}px`;
+
+                // --- Generate random values for the animation ---
+                const randomX = (Math.random() - 0.5) * 2 * 150; // Random X destination
+                const randomY = (Math.random() - 0.5) * 2 * 150; // Random Y destination
+                
+                // --- Set CSS custom properties for the animation ---
+                particle.style.setProperty('--x', `${randomX}px`);
+                particle.style.setProperty('--y', `${randomY}px`);
+
+                // --- Add to the DOM and clean up after animation ---
+                particleContainer.appendChild(particle);
+
+                // Remove the particle from the DOM after the animation completes
+                setTimeout(() => {
+                    particle.remove();
+                }, 800); // Must match the animation duration in CSS
+            }
+        }
+    </script>
+
+</body>
+</html>
